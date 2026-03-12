@@ -39,7 +39,7 @@ export class TemplateService {
   uploadTemplate(name: string, codePrefix: string, file: File): Observable<any> {
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('code_prefix', codePrefix); // Nuevo
+    formData.append('code', codePrefix); // Nuevo
     formData.append('document', file);
     return this.apiService.post<any>('certificates', formData);
   }
