@@ -1,0 +1,77 @@
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Importar Estudiantes desde SGA</h2>
+        <p class="text-sm text-gray-500 mt-1">Sube la matriz de Excel (.xlsx o .csv) extraída del sistema de intranet.</p>
+    </div>
+
+    <div
+        class="bg-white p-10 rounded-xl shadow-sm border-2 text-center transition-all duration-200 relative"
+        [ngClass]="{
+            'border-blue-400 bg-blue-50 border-dashed': isDragging(),
+            'border-gray-200 border-dashed hover:border-blue-300': !isDragging() && !selectedFile(),
+            'border-green-200 border-solid bg-green-50': selectedFile()
+        }"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+    >
+        <input
+            type="file"
+            #fileInput
+            class="hidden"
+            accept=".xlsx, .csv"
+            (change)="onFileSelected($event)"
+        >
+
+        @if (!selectedFile()) {
+            <i class="fa-solid fa-file-excel text-6xl text-blue-400 mb-5 transition-transform" [class.scale-110]="isDragging()"></i>
+            <h3 class="text-lg font-medium text-gray-700">Arrastra el archivo CSV/Excel aquí</h3>
+            <p class="text-gray-500 text-sm mt-2">O haz clic para buscar en tu equipo.</p>
+            <button
+                (click)="fileInput.click()"
+                class="mt-6 px-6 py-2.5 bg-blue-100 text-blue-700 rounded-lg font-bold hover:bg-blue-200 transition-colors shadow-sm cursor-pointer">
+                Seleccionar Archivo
+            </button>
+        } @else {
+            <i class="fa-solid fa-file-circle-check text-6xl text-green-500 mb-5"></i>
+            <h3 class="text-lg font-bold text-gray-800">{{ selectedFile()?.name }}</h3>
+            <p class="text-gray-500 text-sm mt-2">Tamaño: {{ (selectedFile()!.size / 1024 / 1024).toFixed(2) }} MB</p>
+
+            <div class="mt-8 flex justify-center space-x-4">
+                <button
+                    (click)="removeFile()"
+                    [disabled]="isUploading()"
+                    class="px-6 py-2 border border-red-200 text-red-600 rounded-lg font-medium hover:bg-red-50 transition-colors disabled:opacity-50">
+                    Cancelar
+                </button>
+                <button
+                    (click)="upload()"
+                    [disabled]="isUploading()"
+                    class="px-8 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md flex items-center disabled:opacity-70">
+                    @if (isUploading()) {
+                        <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Procesando...
+                    } @else {
+                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Cargar a Base de Datos
+                    }
+                </button>
+            </div>
+        }
+    </div>
+
+    @if (message()) {
+        <div
+            class="mt-6 p-4 rounded-lg border flex items-start shadow-sm"
+            [ngClass]="message()?.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'"
+        >
+            <i class="fa-solid mt-0.5 mr-3 text-lg"
+               [ngClass]="message()?.type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'"></i>
+            <div>
+                <p class="font-bold">{{ message()?.type === 'success' ? '¡Éxito!' : 'Error' }}</p>
+                <p class="text-sm">{{ message()?.text }}</p>
+                @if(message()?.type === 'success') {
+                    <p class="text-xs mt-1 opacity-80">Revisa la pestaña "Estudiantes" en unos segundos para ver la data actualizada.</p>
+                }
+            </div>
+        </div>
+    }
+</div>

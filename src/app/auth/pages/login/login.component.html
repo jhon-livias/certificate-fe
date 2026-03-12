@@ -1,0 +1,39 @@
+<form class="login" [formGroup]="loginForm" (ngSubmit)="login()">
+  <div class="login__Container login__Center">
+    <div class="login__Form">
+      <div class="login__Form--Data">
+        <h1 class="login__Form--Title">Bienvenido de nuevo</h1>
+        <h2 class="login__Form--Subtitle">¡Bienvenido de nuevo! Introduce tus datos.</h2>
+        <div class="login__Form--LoginInput">
+          <bz-input-text
+            label="Email"
+            type="email"
+            id="login"
+            placeholder="Ingresa tu email"
+            [formControl]="loginForm.controls['username']"></bz-input-text>
+        </div>
+        <div class="login__Form--PasswordInput">
+          <bz-input-text
+            label="Password"
+            type="password"
+            id="password"
+            placeholder="Ingresa tu contraseña"
+            [formControl]="loginForm.controls['password']"></bz-input-text>
+        </div>
+        <div class="login__Form--RememberInput">
+          <bz-input-checkbox label="Recuerdame" id="remember"></bz-input-checkbox>
+          <span class="login__Form--ForgotPassword">Olvidé mi contraseña</span>
+        </div>
+        <div class="login__Form--Submit">
+          <bz-input-button
+            label="Iniciar Sesión"
+            type="submit"
+            [disabled]="this.loginForm.invalid"></bz-input-button>
+        </div>
+      </div>
+      <div class="login__Form--Image">
+        <img src="img/login-form.svg" alt="login_form" class="login__Form--Img">
+      </div>
+    </div>
+  </div>
+</form>

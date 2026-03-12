@@ -1,0 +1,22 @@
+<div class="InputText__Container">
+  <label
+    class="InputText__Label"
+    for="{{ id }}">{{ label }}</label>
+  <input
+    id="{{ id }}"
+    name="{{ id }}"
+    class="InputText__Input"
+    type="{{ type }}"
+    placeholder="{{ placeholder }}"
+    [ngClass]="control.touched ? (control.invalid ? 'is-invalid' : 'is-valid') : null"
+    [formControl]="control">
+    @if (control.errors?.["touched"]) {
+      <div class="invalid-feedback">Este campo es requerido</div>
+    }
+    @if (control.errors?.["email"]) {
+      <div class="invalid-feedback">Email inválido</div>
+    }
+    @if (control.errors?.["minLength"]) {
+      <div class="invalid-feedback">El campo debe tener como mínimo 6 caracteres</div>
+    }
+</div>

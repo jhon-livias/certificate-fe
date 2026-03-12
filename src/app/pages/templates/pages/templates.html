@@ -1,0 +1,164 @@
+<div class="max-w-5xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800">Gestor de Plantillas (.docx)</h2>
+      <p class="text-sm text-gray-500 mt-1">Administra los formatos Word base para la generación de documentos.</p>
+    </div>
+    <button (click)="toggleUploadForm()"
+      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition flex items-center font-medium">
+      <i class="fa-solid" [ngClass]="showUploadForm() ? 'fa-xmark mr-2' : 'fa-plus mr-2'"></i>
+      {{ showUploadForm() ? 'Cancelar' : 'Nueva Plantilla' }}
+    </button>
+  </div>
+
+  @if (showUploadForm()) {
+  <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl mb-8 shadow-sm transition-all">
+    <h3 class="font-bold text-blue-800 mb-4 flex items-center">
+      <i class="fa-solid fa-cloud-arrow-up mr-2"></i>
+      {{ editingTemplateId() ? 'Editar y Reemplazar Formato' : 'Subir Formato Word' }}
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">Nombre Identificativo</label>
+        <input type="text" [ngModel]="newTemplateName()" (ngModelChange)="newTemplateName.set($event)"
+          placeholder="Ej: Constancia de Notas V2"
+          class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+      </div>
+
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">Código Base</label>
+        <input type="text" [ngModel]="newTemplateCode()" (ngModelChange)="newTemplateCode.set($event)"
+          placeholder="Ej: CPM Nº 00001 - 2026 R.A./UPRIT - R"
+          class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm uppercase">
+      </div>
+
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">
+          Archivo Base (.docx)
+          @if(editingTemplateId()) { <span class="text-xs text-gray-400 font-normal">(Opcional)</span> }
+        </label>
+        <div class="flex items-center">
+          <input type="file" #fileInput class="hidden" accept=".docx" (change)="onFileSelected($event)">
+          <button (click)="fileInput.click()"
+            class="px-4 py-2.5 border border-gray-300 bg-white rounded-l-lg hover:bg-gray-50 text-sm font-medium transition flex items-center">
+            <i class="fa-solid fa-folder-open text-gray-500 mr-2"></i> Examinar...
+          </button>
+          <div
+            class="flex-1 p-2.5 border-y border-r border-gray-300 bg-white rounded-r-lg text-sm text-gray-500 truncate">
+            {{ selectedFile()?.name || 'Ningún archivo...' }}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mt-5 flex justify-end">
+      <button (click)="upload()"
+        [disabled]="!newTemplateName() || !newTemplateCode() || (!selectedFile() && !editingTemplateId()) || isUploading()"
+        class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 transition shadow-sm flex items-center">
+        @if (isUploading()) {
+          <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Guardando...
+        } @else {
+          {{ editingTemplateId() ? 'Actualizar Plantilla' : 'Guardar Plantilla' }}
+        }
+      </button>
+    </div>
+
+    @if (message()) {
+    <div class="mt-4 p-3 rounded-lg text-sm font-medium flex items-center"
+      [ngClass]="message()?.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+      <i class="fa-solid mr-2"
+        [ngClass]="message()?.type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'"></i>
+      {{ message()?.text }}
+    </div>
+    }
+  </div>
+  }
+
+  @if (isLoadingData()) {
+  <div class="py-12 text-center text-blue-500">
+    <i class="fa-solid fa-circle-notch fa-spin text-4xl mb-3"></i>
+    <p class="font-medium text-gray-500">Cargando plantillas configuradas...</p>
+  </div>
+  } @else {
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    @for (template of templates(); track template.id) {
+    <div
+      class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-colors flex items-start space-x-4 group">
+      <div class="bg-blue-50 p-3.5 rounded-lg group-hover:bg-blue-100 transition-colors">
+        <i class="fa-solid fa-file-word text-blue-600 text-3xl"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h4 class="font-bold text-gray-800 truncate" [title]="template.name">{{ template.name }}</h4>
+        <span
+          class="inline-block mt-1.5 px-2 py-0.5 bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold rounded">
+          {{ template.code }}
+        </span>
+        <p class="text-xs text-gray-400 mt-1.5 truncate">{{ template.fileName }}</p>
+        <p class="text-[11px] font-medium text-gray-500 mt-2"><i class="fa-regular fa-clock mr-1"></i> Actualizado {{
+          template.updatedAt }}</p>
+
+        <div class="mt-4 space-x-3 text-sm flex items-center pt-3 border-t border-gray-100">
+          <button (click)="previewTemplate(template)"
+            class="text-emerald-600 hover:text-emerald-800 font-medium transition flex items-center">
+            <i class="fa-solid fa-eye mr-1"></i> Previsualizar
+          </button>
+
+          <span class="text-gray-300">|</span>
+
+          <button (click)="editTemplate(template)"
+            class="text-blue-600 hover:text-blue-800 font-medium transition flex items-center">
+            <i class="fa-solid fa-pen-to-square mr-1"></i> Editar
+          </button>
+
+          <span class="text-gray-300">|</span>
+
+          <button (click)="deleteTemplate(template.id)"
+            class="text-red-500 hover:text-red-700 font-medium transition flex items-center">
+            <i class="fa-solid fa-trash-can mr-1"></i> Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+    } @empty {
+    <div class="col-span-full py-10 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+      <i class="fa-solid fa-folder-open text-4xl text-gray-300 mb-3"></i>
+      <p class="font-medium">No hay plantillas configuradas.</p>
+      <p class="text-sm mt-1">Haz clic en "Nueva Plantilla" para subir tu primer formato .docx.</p>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+@if (showPreviewModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 transition-opacity">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
+
+      <div class="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+        <h3 class="font-bold text-gray-800 flex items-center">
+          <i class="fa-solid fa-file-word text-blue-600 text-xl mr-2"></i>
+          Previsualización: {{ previewTemplateName() }}
+        </h3>
+        <button (click)="closePreview()" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto bg-gray-100 p-8 relative">
+        @if (isLoadingPreview()) {
+          <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-100/80 z-10">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i>
+            <p class="font-medium text-gray-600">Procesando y renderizando documento...</p>
+          </div>
+        }
+
+        <div #docxContainer class="bg-white shadow-lg mx-auto min-h-[1056px] max-w-[816px] p-10 ring-1 ring-gray-200">
+          </div>
+      </div>
+
+    </div>
+  </div>
+}
