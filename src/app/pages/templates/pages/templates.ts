@@ -127,6 +127,7 @@ export class Templates {
   }
 
   resetForm() {
+    this.editingTemplateId.set(null);
     this.newTemplateName.set('');
     this.newTemplateCode.set('');
     this.selectedFile.set(null);
