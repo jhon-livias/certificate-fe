@@ -25,7 +25,9 @@ export const pagesRoutes: Routes = [
       {
         path: 'generar-envio',
         loadComponent: () =>
-          import('../pages/generate-send/generate-send').then((c) => c.GenerateSend),
+          import('../pages/certificates/pages/generate-certificate/generate-certificate').then(
+            (c) => c.GenerateCertificate,
+          ),
       },
       { path: '', redirectTo: 'estudiantes/listado', pathMatch: 'full' },
     ],

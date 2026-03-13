@@ -1,0 +1,95 @@
+<div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans">
+
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-blue-900"><i class="fa-solid fa-building-columns mr-2"></i> UPRIT</h1>
+        <p class="text-gray-500 font-medium tracking-wide">Portal de Validación Documental</p>
+    </div>
+
+    <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+
+        @if (!isValidated()) {
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-shield-halved text-2xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Verificación de Seguridad</h2>
+                    <p class="text-sm text-gray-500 mt-1">Ingrese los datos exactos del titular para desencriptar y visualizar la constancia.</p>
+                </div>
+
+                @if (errorMessage()) {
+                    <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-start animate-fade-in-up">
+                        <i class="fa-solid fa-triangle-exclamation mt-1 mr-2"></i> {{ errorMessage() }}
+                    </div>
+                }
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">DNI del Estudiante</label>
+                        <input type="text" [ngModel]="dni()" (ngModelChange)="dni.set($event)" placeholder="Ej: 71234567" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Código de Constancia</label>
+                        <input type="text" [ngModel]="certificateCode()" (ngModelChange)="certificateCode.set($event)" placeholder="Ej: CDD Nº 00001 - 2026 R.A./UPRIT - PG" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase font-medium">
+                        <p class="text-[11px] text-gray-400 mt-1">Encontrará este código en la parte inferior del código QR enviado a su correo.</p>
+                    </div>
+
+                    <button (click)="verify()" [disabled]="isChecking() || !dni() || !certificateCode()" class="w-full mt-2 bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg disabled:opacity-50">
+                        @if (isChecking()) {
+                            <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Verificando en SUNEDU...
+                        } @else {
+                            Validar Documento <i class="fa-solid fa-arrow-right ml-2"></i>
+                        }
+                    </button>
+                </div>
+            </div>
+        }
+
+        @else {
+            <div class="bg-green-600 p-6 text-center text-white animate-fade-in-up">
+                <i class="fa-solid fa-circle-check text-5xl mb-2"></i>
+                <h2 class="text-2xl font-bold">Documento Auténtico</h2>
+                <p class="text-green-100 text-sm mt-1">Esta constancia ha sido emitida y registrada oficialmente por la UPRIT.</p>
+            </div>
+
+            <div class="p-8">
+                <div class="space-y-3 text-sm text-gray-600 mb-8 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="flex flex-col"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Titular</span> <span class="font-bold text-gray-800 text-base">{{ certData().student_name }}</span></div>
+                    <div class="flex flex-col"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Programa / Especialidad</span> <span class="font-medium text-gray-800">{{ certData().program }}</span></div>
+                    <div class="flex flex-col"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Fecha de Emisión</span> <span class="font-medium text-gray-800">{{ certData().issue_date }}</span></div>
+                    <div class="flex flex-col"><span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Código de Registro</span> <span class="font-bold text-blue-700">{{ certData().certificate_code }}</span></div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button (click)="loadPreview()" class="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition flex items-center justify-center">
+                        <i class="fa-solid fa-eye mr-2"></i> Previsualizar
+                    </button>
+                    <button (click)="downloadDocument()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow flex items-center justify-center">
+                        <i class="fa-solid fa-download mr-2"></i> Descargar .docx
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (showPreview()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm p-4 animate-fade-in-up">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+                <div class="flex justify-between items-center p-4 border-b bg-gray-50">
+                    <h3 class="font-bold text-gray-800"><i class="fa-solid fa-file-word text-blue-600 mr-2"></i> Vista Previa del Documento Oficial</h3>
+                    <button (click)="showPreview.set(false)" class="text-gray-500 hover:text-red-500 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto bg-gray-200 p-8 relative">
+                    @if (isLoadingDoc()) {
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-100/90 z-10">
+                            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i>
+                            <p class="font-medium text-gray-600">Desencriptando y cargando documento...</p>
+                        </div>
+                    }
+                    <div #docxContainer class="bg-white shadow-lg mx-auto min-h-[1056px] max-w-[816px] ring-1 ring-gray-300"></div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

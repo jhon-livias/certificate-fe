@@ -19,5 +19,12 @@ export const routes: Routes = [
     canActivate: [guestGuard],
     loadChildren: () => import('./auth/auth.routes').then((m) => m.authRoutes),
   },
+  {
+    path: 'validar/:trackingCode',
+    loadComponent: () =>
+      import('./pages/certificates/pages/preview-certificate/preview-certificate').then(
+        (c) => c.PreviewCertificate,
+      ),
+  },
   { path: '', pathMatch: 'full', redirectTo: '' },
 ];

@@ -23,7 +23,6 @@ export class TemplateService {
   templates: Template[] = [];
   templates$: BehaviorSubject<Template[]> = new BehaviorSubject<Template[]>(this.templates);
 
-  // 1. Obtener listado y actualizar el estado
   callGetList(): Observable<Template[]> {
     return this.apiService.get<Template[]>('certificates').pipe(
       tap((response: Template[]) => {
@@ -39,7 +38,7 @@ export class TemplateService {
   uploadTemplate(name: string, codePrefix: string, file: File): Observable<any> {
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('code', codePrefix); // Nuevo
+    formData.append('code', codePrefix);
     formData.append('document', file);
     return this.apiService.post<any>('certificates', formData);
   }
@@ -49,10 +48,9 @@ export class TemplateService {
     formData.append('name', name);
     formData.append('code', code);
     if (file) {
-      formData.append('document', file); // Solo lo envía si el usuario seleccionó un nuevo archivo
+      formData.append('document', file);
     }
 
-    // Mandamos a la nueva ruta POST que creamos en Laravel
     return this.apiService.post<any>(`certificates/${id}`, formData);
   }
 
