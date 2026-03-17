@@ -3,6 +3,7 @@ import { Component, ElementRef, inject, OnInit, signal, ViewChild } from '@angul
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import * as docx from 'docx-preview';
+import { ToastService } from '../../../../services/toast.service';
 import { StudentService } from '../../../students/services/student.service';
 import { TemplateService } from '../../../templates/services/template.service';
 import { CertificateService } from '../../services/certificate.service';
@@ -39,7 +40,12 @@ export class GenerateCertificate implements OnInit {
   ccEmails = signal<string[]>([]);
   issuedCertificateId = signal<number | null>(null); // Añade esto arriba
   isSendingEmail = signal<boolean>(false);
+  customEmail = signal<string>('');
   emailBody = signal<string>(''); // Para enlazar el textarea
+
+  // toast = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  private toast = inject(ToastService);
 
   ngOnInit() {
     this.templateService.callGetList().subscribe();
@@ -64,12 +70,13 @@ export class GenerateCertificate implements OnInit {
     this.studentService.getOne(code).subscribe({
       next: (student) => {
         this.selectedStudent.set(student);
+        this.customEmail.set(student.email || '');
         this.isSearching.set(false);
       },
       error: () => {
         this.selectedStudent.set(null);
         this.isSearching.set(false);
-        alert('Estudiante no encontrado en la base de datos.');
+        this.toast.show('Estudiante no encontrado en la base de datos.', 'error');
       },
     });
   }
@@ -81,7 +88,8 @@ export class GenerateCertificate implements OnInit {
     const certCode = this.customCertificateCode();
 
     if (!student || !templateId || !certCode) {
-      alert('Por favor complete todos los campos de la izquierda.');
+      this.toast.show('Por favor complete todos los campos de la izquierda.', 'error');
+
       return;
     }
 
@@ -122,7 +130,6 @@ export class GenerateCertificate implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        alert('Error al generar la constancia. Revisa la consola.');
         this.isGenerating.set(false);
       },
     });
@@ -155,7 +162,7 @@ export class GenerateCertificate implements OnInit {
     this.isSendingEmail.set(true);
 
     const payload = {
-      email: student.email || 'estudiante@correo.com', // Ajusta según tu base de datos
+      email: this.customEmail() || 'estudiante@correo.com', // Ajusta según tu base de datos
       cc_emails: this.ccEmails().filter((e) => e.trim() !== ''), // Limpiar vacíos
       body:
         this.emailBody() || `Estimado(a) ${student.fullName}, adjunto encontrará su constancia...`,
@@ -164,7 +171,7 @@ export class GenerateCertificate implements OnInit {
     this.certificateService.sendEmail(id, payload).subscribe({
       next: (res) => {
         this.isSendingEmail.set(false);
-        alert('¡Constancia enviada exitosamente al correo del estudiante!');
+        this.toast.show('¡Constancia enviada exitosamente al correo!', 'success');
 
         // Resetear todo para la siguiente constancia
         this.step.set(1);
@@ -175,7 +182,6 @@ export class GenerateCertificate implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        alert('Error al enviar el correo. Revisa la configuración del servidor SMTP.');
         this.isSendingEmail.set(false);
       },
     });

@@ -1,0 +1,25 @@
+@if (toastService.toastSignal(); as toast) {
+  <div class="fixed bottom-6 right-6 z-[9999] animate-fade-in-up">
+    <div class="flex items-center px-6 py-4 rounded-xl shadow-2xl border"
+         [ngClass]="toast.type === 'success' ? 'bg-white border-green-200' :
+                    toast.type === 'error' ? 'bg-white border-red-200' : 'bg-white border-blue-200'">
+
+      <div class="flex-shrink-0 mr-3 text-xl"
+           [ngClass]="toast.type === 'success' ? 'text-green-500' :
+                      toast.type === 'error' ? 'text-red-500' : 'text-blue-500'">
+        <i class="fa-solid"
+           [ngClass]="toast.type === 'success' ? 'fa-circle-check' :
+                      toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'"></i>
+      </div>
+
+      <div class="text-sm font-bold text-gray-700">
+        {{ toast.text }}
+      </div>
+
+      <button (click)="toastService.hide()" class="ml-6 text-gray-400 hover:text-gray-600 transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+  </div>
+}
