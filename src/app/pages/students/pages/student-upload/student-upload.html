@@ -1,7 +1,13 @@
 <div class="max-w-4xl mx-auto">
     <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Importar Estudiantes desde SGA</h2>
-        <p class="text-sm text-gray-500 mt-1">Sube la matriz de Excel (.xlsx o .csv)</p>
+        <div class="mb-3">
+            <h2 class="text-2xl font-bold text-gray-800">Importar Estudiantes desde SGA</h2>
+            <p class="text-sm text-gray-500 mt-1">Sube la matriz de Excel (.xlsx o .csv) con los datos de los alumnos.</p>
+        </div>
+        <a [href]="downloadLink" download="plantilla_alumnos.xlsx" class="inline-flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-bold shadow-sm">
+            <i class="fa-solid fa-file-excel mr-2 text-emerald-600"></i>
+            Descargar Plantilla Modelo
+        </a>
     </div>
 
     <div
