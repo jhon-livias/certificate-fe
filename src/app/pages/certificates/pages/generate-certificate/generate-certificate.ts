@@ -97,7 +97,7 @@ export class GenerateCertificate implements OnInit {
     this.previewReady.set(false);
 
     const payload = {
-      student_code: student.studentCode,
+      dni: student.dni,
       certificate_id: templateId,
       certificate_code: certCode,
     };

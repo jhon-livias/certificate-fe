@@ -17,10 +17,10 @@ export class StudentService {
   total: number = 0;
   total$: BehaviorSubject<number> = new BehaviorSubject<number>(this.total);
 
-  callGetList(limit: number = 10, page: number = 1, name: string = ''): Observable<void> {
+  callGetList(limit: number = 10, page: number = 1, search: string = ''): Observable<void> {
     let url = `students?limit=${limit}&page=${page}`;
-    if (name) {
-      url += `&search=${name}`;
+    if (search) {
+      url += `&search=${search}`;
     }
     return this.apiService.get<StudentListResponse>(url).pipe(
       map((response: StudentListResponse) => {
@@ -45,7 +45,6 @@ export class StudentService {
   uploadBulk(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('document', file);
-    // Usamos post() genérico de tu ApiService
     return this.apiService.post<any>('students/bulk-upload', formData);
   }
 

@@ -27,21 +27,21 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                            <th class="p-4 whitespace-nowrap">Código</th>
                             <th class="p-4 whitespace-nowrap">DNI</th>
                             <th class="p-4">Apellidos y Nombres</th>
+                            <th class="p-4">Email</th>
                             <th class="p-4">Programa / Carrera</th>
-                            <th class="p-4">Modalidad</th>
+                            <th class="p-4">Periodo</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm text-gray-700">
                         @for (student of students(); track student.id) {
                             <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                <td class="p-4 font-medium">{{ student.studentCode }}</td>
-                                <td class="p-4">{{ student.documentNumber }}</td>
-                                <td class="p-4 font-bold text-gray-900">{{ student.fullName }}</td>
+                                <td class="p-4 font-medium">{{ student.dni }}</td>
+                                <td class="p-4">{{ student.surname }} {{ student.name }}</td>
+                                <td class="p-4 font-bold text-gray-900">{{ student.email }}</td>
                                 <td class="p-4 text-gray-500">{{ student.program }}</td>
-                                <td class="p-4 text-center">{{ student.modality }}</td>
+                                <td class="p-4 text-center">{{ student.period }}</td>
                             </tr>
                         } @empty {
                             <tr>

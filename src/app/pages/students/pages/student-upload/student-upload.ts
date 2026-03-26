@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { StudentService } from '../../services/student.service';
 import { BACKEND_URL } from '../../../../utils/constants';
+import { StudentService } from '../../services/student.service';
 
 @Component({
   selector: 'app-student-upload',
@@ -11,7 +11,7 @@ import { BACKEND_URL } from '../../../../utils/constants';
 })
 export class StudentUpload {
   private studentService = inject(StudentService);
-  downloadLink = BACKEND_URL + "/template/plantilla_alumnos.xlsx";
+  downloadLink = BACKEND_URL + '/template/plantilla_alumnos.xlsx';
 
   // Estados reactivos
   selectedFile = signal<File | null>(null);

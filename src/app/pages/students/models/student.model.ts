@@ -1,54 +1,36 @@
 export interface IStudent {
   id: number;
-  studentCode: string;
-  documentNumber: string;
-  fullName: string;
-  gender: string;
-  email: string;
-  phone: string;
-  address: string;
-  admissionMode: string;
+  name: string;
+  surname: string;
+  dni: string;
+  programType: string;
   program: string;
-  campus: string;
-  modality: string;
-  shift: string;
+  period: string;
+  email: string;
   status: string;
-  graduationYear: string;
 }
 
 export class Student implements IStudent {
   id: number;
-  studentCode: string;
-  documentNumber: string;
-  fullName: string;
-  gender: string;
-  email: string;
-  phone: string;
-  address: string;
-  admissionMode: string;
+  name: string;
+  surname: string;
+  dni: string;
+  programType: string;
   program: string;
-  campus: string;
-  modality: string;
-  shift: string;
+  period: string;
+  email: string;
   status: string;
-  graduationYear: string;
 
   constructor(student: IStudent) {
     this.id = student.id;
-    this.studentCode = student.studentCode;
-    this.documentNumber = student.documentNumber;
-    this.fullName = student.fullName;
-    this.gender = student.gender;
-    this.email = student.email;
-    this.phone = student.phone;
-    this.address = student.address;
-    this.admissionMode = student.admissionMode;
+    this.name = student.name;
+    this.surname = student.surname;
+    this.dni = student.dni;
+    this.programType = student.programType;
     this.program = student.program;
-    this.campus = student.campus;
-    this.modality = student.modality;
-    this.shift = student.shift;
+    this.period = student.period;
+    this.email = student.email;
     this.status = student.status;
-    this.graduationYear = student.graduationYear;
   }
 }
 

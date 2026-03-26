@@ -10,7 +10,7 @@ export class CertificateService {
   private http = inject(HttpClient);
 
   generateCertificate(payload: {
-    student_code: string;
+    dni: string;
     certificate_id: number;
     certificate_code: string;
   }): Observable<any> {
