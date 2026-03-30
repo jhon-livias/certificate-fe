@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import * as docx from 'docx-preview';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; // <-- INYECTAR SANITIZADOR
 import { ValidationService } from '../../services/validation.service';
 
 @Component({
@@ -14,6 +14,7 @@ import { ValidationService } from '../../services/validation.service';
 export class PreviewCertificate {
   private route = inject(ActivatedRoute);
   private validationService = inject(ValidationService);
+  private sanitizer = inject(DomSanitizer); // <-- VITAL PARA EL IFRAME
 
   // Capturamos el código de la URL
   trackingCode = signal<string>('');
@@ -28,13 +29,13 @@ export class PreviewCertificate {
   errorMessage = signal<string>('');
   certData = signal<any>(null);
 
-  // Previsualización
-  @ViewChild('docxContainer', { static: false }) docxContainer!: ElementRef;
+  // Previsualización PDF
   showPreview = signal<boolean>(false);
   isLoadingDoc = signal<boolean>(false);
+  pdfPreviewUrl = signal<SafeResourceUrl | null>(null);
+  private rawPdfUrl: string | null = null; // Para limpiar la RAM del usuario
 
   ngOnInit() {
-    // Obtenemos el ID encriptado de la URL
     this.trackingCode.set(this.route.snapshot.paramMap.get('trackingCode') || '');
   }
 
@@ -66,38 +67,51 @@ export class PreviewCertificate {
   loadPreview() {
     this.showPreview.set(true);
     this.isLoadingDoc.set(true);
+    this.pdfPreviewUrl.set(null);
 
     this.validationService
       .getValidatedBlob(this.trackingCode(), this.dni(), this.certificateCode())
       .subscribe({
         next: (blob) => {
+          // 1. Limpiamos cualquier URL anterior
+          if (this.rawPdfUrl) window.URL.revokeObjectURL(this.rawPdfUrl);
+
+          // 2. Forzamos que el Blob se lea como PDF
+          const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+          
+          // 3. Creamos URL temporal y la sanitizamos para el iframe
+          this.rawPdfUrl = window.URL.createObjectURL(pdfBlob);
+          this.pdfPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.rawPdfUrl));
+          
           this.isLoadingDoc.set(false);
-          setTimeout(() => {
-            if (this.docxContainer) {
-              docx
-                .renderAsync(blob, this.docxContainer.nativeElement, undefined, {
-                  className: 'docx-preview-container',
-                  inWrapper: true,
-                })
-                .catch((err) => console.error(err));
-            }
-          }, 100);
         },
         error: () => {
           this.isLoadingDoc.set(false);
-          alert('Error al renderizar el documento.');
+          alert('Error al descargar el PDF seguro.');
+          this.showPreview.set(false);
         },
       });
+  }
+
+  closePreview() {
+    this.showPreview.set(false);
+    this.pdfPreviewUrl.set(null);
+    if (this.rawPdfUrl) {
+      window.URL.revokeObjectURL(this.rawPdfUrl);
+      this.rawPdfUrl = null;
+    }
   }
 
   downloadDocument() {
     this.validationService
       .getValidatedBlob(this.trackingCode(), this.dni(), this.certificateCode())
       .subscribe((blob) => {
-        const url = window.URL.createObjectURL(blob);
+        // Aseguramos formato PDF para la descarga
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(pdfBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${this.certificateCode()}.docx`;
+        a.download = `${this.certificateCode()}.pdf`; // <-- CAMBIADO A PDF
         a.click();
         window.URL.revokeObjectURL(url);
       });
