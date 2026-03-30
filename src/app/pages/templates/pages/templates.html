@@ -1,8 +1,8 @@
 <div class="max-w-5xl mx-auto">
   <div class="flex justify-between items-center mb-6">
     <div>
-      <h2 class="text-2xl font-bold text-gray-800">Gestor de Plantillas (.docx)</h2>
-      <p class="text-sm text-gray-500 mt-1">Administra los formatos Word base para la generación de documentos.</p>
+      <h2 class="text-2xl font-bold text-gray-800">Gestor de Plantillas (.pdf)</h2>
+      <p class="text-sm text-gray-500 mt-1">Administra los formatos PDF base para la generación de documentos.</p>
     </div>
     <button (click)="toggleUploadForm()"
       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition flex items-center font-medium">
@@ -15,11 +15,10 @@
   <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl mb-8 shadow-sm transition-all">
     <h3 class="font-bold text-blue-800 mb-4 flex items-center">
       <i class="fa-solid fa-cloud-arrow-up mr-2"></i>
-      {{ editingTemplateId() ? 'Editar y Reemplazar Formato' : 'Subir Formato Word' }}
+      {{ editingTemplateId() ? 'Editar y Reemplazar Formato' : 'Subir Formato PDF' }}
     </h3>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
       <div>
         <label class="block text-sm font-bold text-gray-700 mb-1">Nombre Identificativo</label>
         <input type="text" [ngModel]="newTemplateName()" (ngModelChange)="newTemplateName.set($event)"
@@ -36,11 +35,11 @@
 
       <div>
         <label class="block text-sm font-bold text-gray-700 mb-1">
-          Archivo Base (.docx)
+          Archivo Base (.pdf)
           @if(editingTemplateId()) { <span class="text-xs text-gray-400 font-normal">(Opcional)</span> }
         </label>
         <div class="flex items-center">
-          <input type="file" #fileInput class="hidden" accept=".docx" (change)="onFileSelected($event)">
+          <input type="file" #fileInput class="hidden" accept=".pdf" (change)="onFileSelected($event)">
           <button (click)="fileInput.click()"
             class="px-4 py-2.5 border border-gray-300 bg-white rounded-l-lg hover:bg-gray-50 text-sm font-medium transition flex items-center">
             <i class="fa-solid fa-folder-open text-gray-500 mr-2"></i> Examinar...
@@ -51,7 +50,6 @@
           </div>
         </div>
       </div>
-
     </div>
 
     <div class="mt-5 flex justify-end">
@@ -86,9 +84,9 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     @for (template of templates(); track template.id) {
     <div
-      class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-colors flex items-start space-x-4 group">
-      <div class="bg-blue-50 p-3.5 rounded-lg group-hover:bg-blue-100 transition-colors">
-        <i class="fa-solid fa-file-word text-blue-600 text-3xl"></i>
+      class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:border-red-300 transition-colors flex items-start space-x-4 group">
+      <div class="bg-red-50 p-3.5 rounded-lg group-hover:bg-red-100 transition-colors">
+        <i class="fa-solid fa-file-pdf text-red-500 text-3xl"></i>
       </div>
       <div class="flex-1 min-w-0">
         <h4 class="font-bold text-gray-800 truncate" [title]="template.name">{{ template.name }}</h4>
@@ -105,16 +103,12 @@
             class="text-emerald-600 hover:text-emerald-800 font-medium transition flex items-center">
             <i class="fa-solid fa-eye mr-1"></i> Previsualizar
           </button>
-
           <span class="text-gray-300">|</span>
-
           <button (click)="editTemplate(template)"
             class="text-blue-600 hover:text-blue-800 font-medium transition flex items-center">
             <i class="fa-solid fa-pen-to-square mr-1"></i> Editar
           </button>
-
           <span class="text-gray-300">|</span>
-
           <button (click)="deleteTemplate(template.id)"
             class="text-red-500 hover:text-red-700 font-medium transition flex items-center">
             <i class="fa-solid fa-trash-can mr-1"></i> Eliminar
@@ -126,7 +120,7 @@
     <div class="col-span-full py-10 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
       <i class="fa-solid fa-folder-open text-4xl text-gray-300 mb-3"></i>
       <p class="font-medium">No hay plantillas configuradas.</p>
-      <p class="text-sm mt-1">Haz clic en "Nueva Plantilla" para subir tu primer formato .docx.</p>
+      <p class="text-sm mt-1">Haz clic en "Nueva Plantilla" para subir tu primer formato .pdf.</p>
     </div>
     }
   </div>
@@ -139,7 +133,7 @@
 
       <div class="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
         <h3 class="font-bold text-gray-800 flex items-center">
-          <i class="fa-solid fa-file-word text-blue-600 text-xl mr-2"></i>
+          <i class="fa-solid fa-file-pdf text-red-500 text-xl mr-2"></i>
           Previsualización: {{ previewTemplateName() }}
         </h3>
         <button (click)="closePreview()" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
@@ -147,16 +141,17 @@
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto bg-gray-100 p-8 relative">
+      <div class="flex-1 bg-gray-200 relative p-2 md:p-4">
         @if (isLoadingPreview()) {
-          <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-100/80 z-10">
-            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i>
-            <p class="font-medium text-gray-600">Procesando y renderizando documento...</p>
+          <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-100/90 z-10">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-500 mb-3"></i>
+            <p class="font-medium text-gray-600">Cargando visor PDF...</p>
           </div>
         }
-
-        <div #docxContainer class="bg-white shadow-lg mx-auto min-h-96 max-w-204 p-10 ring-1 ring-gray-200">
-          </div>
+        
+        @if (pdfPreviewUrl()) {
+          <iframe [src]="pdfPreviewUrl()" class="w-full h-full rounded-lg shadow-sm border border-gray-300"></iframe>
+        }
       </div>
 
     </div>

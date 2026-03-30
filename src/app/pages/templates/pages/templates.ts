@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import * as docx from 'docx-preview';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; // <-- NUEVO
 import { Template, TemplateService } from '../services/template.service';
 
 @Component({
@@ -12,9 +12,8 @@ import { Template, TemplateService } from '../services/template.service';
   styleUrl: './templates.css',
 })
 export class Templates {
-  @ViewChild('docxContainer', { static: false }) docxContainer!: ElementRef;
-
   private templateService = inject(TemplateService);
+  private sanitizer = inject(DomSanitizer); // <-- INYECTAMOS EL SANITIZADOR
 
   // Estados
   templates = toSignal(this.templateService.getList(), { initialValue: [] });
@@ -33,11 +32,14 @@ export class Templates {
   previewTemplateName = signal<string>('');
   isLoadingPreview = signal<boolean>(false);
 
+  // --- NUEVOS ESTADOS PARA PDF ---
+  pdfPreviewUrl = signal<SafeResourceUrl | null>(null);
+  private rawPdfUrl: string | null = null; // Guardamos la url cruda para limpiar la memoria
+
   ngOnInit() {
     this.loadTemplates();
   }
 
-  // Cargar desde la API
   loadTemplates() {
     this.isLoadingData.set(true);
     this.templateService.callGetList().subscribe({
@@ -58,11 +60,9 @@ export class Templates {
     this.editingTemplateId.set(template.id);
     this.newTemplateName.set(template.name);
     this.newTemplateCode.set(template.code);
-    this.selectedFile.set(null); // Empezamos sin archivo nuevo seleccionado
+    this.selectedFile.set(null); 
     this.message.set(null);
     this.showUploadForm.set(true);
-
-    // Hacemos scroll suave hacia arriba para que el usuario vea el formulario
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -70,10 +70,11 @@ export class Templates {
     const file = event.target.files[0];
     if (file) {
       const ext = file.name.split('.').pop()?.toLowerCase();
-      if (ext === 'docx') {
+      // VALIDAMOS QUE AHORA SEA PDF
+      if (ext === 'pdf') {
         this.selectedFile.set(file);
       } else {
-        alert('Solo se permiten archivos Word (.docx)');
+        alert('Solo se permiten archivos PDF (.pdf)');
         event.target.value = '';
       }
     }
@@ -85,12 +86,10 @@ export class Templates {
     const file = this.selectedFile();
     const editingId = this.editingTemplateId();
 
-    // Si estamos CREANDO, el archivo es obligatorio. Si estamos EDITANDO, es opcional.
     if (!name || !code || (!file && !editingId)) return;
 
     this.isUploading.set(true);
 
-    // Decidimos qué método del servicio llamar
     const request$ = editingId
       ? this.templateService.updateTemplate(editingId, name, code, file)
       : this.templateService.uploadTemplate(name, code, file as File);
@@ -99,9 +98,7 @@ export class Templates {
       next: (res) => {
         this.isUploading.set(false);
         this.message.set({ text: res.message, type: 'success' });
-
         this.templateService.callGetList().subscribe();
-
         setTimeout(() => this.toggleUploadForm(), 1500);
       },
       error: (err) => {
@@ -112,16 +109,10 @@ export class Templates {
   }
 
   deleteTemplate(id: number) {
-    if (confirm('¿Estás seguro de eliminar esta plantilla de la base de datos y del servidor?')) {
+    if (confirm('¿Estás seguro de eliminar esta plantilla?')) {
       this.templateService.deleteTemplate(id).subscribe({
-        next: () => {
-          // Volvemos a pedir la lista actualizada
-          this.templateService.callGetList().subscribe();
-        },
-        error: (err) => {
-          alert('No se pudo eliminar la plantilla. Revisa la consola.');
-          console.error(err);
-        },
+        next: () => this.templateService.callGetList().subscribe(),
+        error: (err) => alert('No se pudo eliminar la plantilla. Revisa la consola.'),
       });
     }
   }
@@ -134,34 +125,26 @@ export class Templates {
     this.message.set(null);
   }
 
+  // --- LÓGICA DE PREVISUALIZACIÓN DE PDF ---
   previewTemplate(template: any) {
-    // Cambia 'any' por tu interfaz Template/Certificate
     this.showPreviewModal.set(true);
     this.previewTemplateName.set(template.name);
     this.isLoadingPreview.set(true);
+    this.pdfPreviewUrl.set(null);
 
     this.templateService.downloadTemplate(template.id).subscribe({
       next: (blob: Blob) => {
+        // 1. Aseguramos que el Blob tenga el mimetype correcto
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        
+        // 2. Creamos una URL temporal en el navegador
+        this.rawPdfUrl = window.URL.createObjectURL(pdfBlob);
+        
+        // 3. Sanitizamos la URL para que Angular permita meterla en el src del iframe
+        const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.rawPdfUrl);
+        
+        this.pdfPreviewUrl.set(safeUrl);
         this.isLoadingPreview.set(false);
-
-        // Le damos un respiro a Angular para que pinte el modal en el HTML antes de inyectar el Word
-        setTimeout(() => {
-          if (this.docxContainer) {
-            // Opciones para que se vea limpio
-            const options = {
-              className: 'docx-preview-container',
-              inWrapper: true,
-              ignoreWidth: false,
-              ignoreHeight: false,
-            };
-
-            // Renderizamos el Blob (el archivo Word) dentro del div
-            docx
-              .renderAsync(blob, this.docxContainer.nativeElement, undefined, options)
-              .then(() => console.log('Documento renderizado con éxito'))
-              .catch((err) => console.error('Error renderizando', err));
-          }
-        }, 100);
       },
       error: (err) => {
         this.isLoadingPreview.set(false);
@@ -173,8 +156,12 @@ export class Templates {
 
   closePreview() {
     this.showPreviewModal.set(false);
-    if (this.docxContainer) {
-      this.docxContainer.nativeElement.innerHTML = ''; // Limpiamos el contenedor
+    this.pdfPreviewUrl.set(null);
+    
+    // Limpiamos la memoria del navegador destruyendo la URL del PDF temporal
+    if (this.rawPdfUrl) {
+      window.URL.revokeObjectURL(this.rawPdfUrl);
+      this.rawPdfUrl = null;
     }
   }
 }
