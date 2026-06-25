@@ -21,7 +21,7 @@
                     <h3 class="font-bold text-gray-800 mb-4">1. Buscar Estudiante</h3>
                     <div class="flex space-x-2">
                         <div class="relative flex-1">
-                            <input type="text" [ngModel]="searchCode()" (ngModelChange)="searchCode.set($event)" (keyup.enter)="searchStudent()" placeholder="Código del alumno..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm uppercase">
+                            <input type="text" [ngModel]="searchCode()" (ngModelChange)="searchCode.set($event)" (keyup.enter)="searchStudent()" placeholder="Código o DNI del alumno..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm uppercase">
                             <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
                         </div>
                         <button (click)="searchStudent()" [disabled]="isSearching()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition disabled:opacity-50">
@@ -49,7 +49,7 @@
                     </select>
 
                     <label class="block text-xs font-bold text-gray-500 mb-1">Código Autogenerado (Editable)</label>
-                    <input type="text" [ngModel]="customCertificateCode()" (ngModelChange)="customCertificateCode.set($event)" placeholder="Ej: CPM Nº 00001..." class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium text-blue-800 bg-blue-50 uppercase">
+                    <input type="text" [ngModel]="customCertificateCode()" (ngModelChange)="customCertificateCode.set($event)" placeholder="Ej: CDE N° 00001 - 2026 R.A./UPRIT - PG" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium text-blue-800 bg-blue-50 uppercase">
                 </div>
 
                 <button (click)="generatePreview()" [disabled]="isGenerating() || !selectedStudent() || !selectedTemplateId()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
@@ -64,8 +64,8 @@
             <div class="lg:col-span-2">
                 @if (!previewReady() && !isGenerating()) {
                     <div class="h-full border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 bg-gray-50 min-h-[500px]">
-                        <i class="fa-regular fa-file-word text-6xl mb-4 text-gray-300"></i>
-                        <p class="font-medium">El documento generado aparecerá aquí</p>
+                        <i class="fa-regular fa-file-pdf text-6xl mb-4 text-gray-300"></i>
+                        <p class="font-medium">El PDF generado aparecerá aquí</p>
                         <p class="text-xs mt-1">Busca un alumno y selecciona una plantilla para comenzar</p>
                     </div>
                 }
@@ -73,18 +73,24 @@
                 @if (isGenerating()) {
                     <div class="h-full border-2 border-gray-200 rounded-xl flex flex-col items-center justify-center bg-white min-h-[500px]">
                         <i class="fa-solid fa-cog fa-spin text-5xl mb-4 text-blue-500"></i>
-                        <p class="font-bold text-gray-700">Inyectando datos en la plantilla...</p>
+                        <p class="font-bold text-gray-700">Generando constancia en PDF...</p>
                     </div>
                 }
 
-                <div [hidden]="!previewReady()" class="bg-gray-100 p-8 rounded-xl border border-gray-200 shadow-inner overflow-y-auto max-h-[800px]">
-                    <div #docxContainer class="bg-white shadow-lg mx-auto min-h-[1056px] max-w-[816px] ring-1 ring-gray-200">
-                        </div>
+                <div [hidden]="!previewReady()" class="bg-gray-100 p-4 rounded-xl border border-gray-200 shadow-inner overflow-hidden max-h-[800px]">
+                    @if (pdfPreviewUrl()) {
+                        <iframe
+                            #pdfViewer
+                            [src]="pdfPreviewUrl()"
+                            class="w-full min-h-[700px] bg-white shadow-lg ring-1 ring-gray-200 rounded"
+                            title="Vista previa de la constancia"
+                        ></iframe>
+                    }
                 </div>
 
                 @if (previewReady()) {
                     <div class="mt-6 flex justify-between items-center bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
-                        <p class="text-sm text-green-700 font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Documento generado correctamente</p>
+                        <p class="text-sm text-green-700 font-bold"><i class="fa-solid fa-check-circle mr-1"></i> PDF generado correctamente</p>
                         <button (click)="step.set(2)" class="bg-slate-900 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition shadow flex items-center">
                             Continuar al Envío <i class="fa-solid fa-arrow-right ml-2"></i>
                         </button>

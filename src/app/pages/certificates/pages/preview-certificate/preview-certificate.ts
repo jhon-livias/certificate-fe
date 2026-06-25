@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import * as docx from 'docx-preview';
 import { ValidationService } from '../../services/validation.service';
 
 @Component({
@@ -11,31 +11,32 @@ import { ValidationService } from '../../services/validation.service';
   templateUrl: './preview-certificate.html',
   styleUrl: './preview-certificate.css',
 })
-export class PreviewCertificate {
+export class PreviewCertificate implements OnDestroy {
   private route = inject(ActivatedRoute);
   private validationService = inject(ValidationService);
+  private sanitizer = inject(DomSanitizer);
 
-  // Capturamos el código de la URL
   trackingCode = signal<string>('');
-
-  // Inputs del usuario
   dni = signal<string>('');
   certificateCode = signal<string>('');
 
-  // Estados de UI
   isChecking = signal<boolean>(false);
   isValidated = signal<boolean>(false);
   errorMessage = signal<string>('');
   certData = signal<any>(null);
 
-  // Previsualización
-  @ViewChild('docxContainer', { static: false }) docxContainer!: ElementRef;
   showPreview = signal<boolean>(false);
   isLoadingDoc = signal<boolean>(false);
+  pdfPreviewUrl = signal<SafeResourceUrl | null>(null);
+
+  private rawPdfUrl: string | null = null;
 
   ngOnInit() {
-    // Obtenemos el ID encriptado de la URL
     this.trackingCode.set(this.route.snapshot.paramMap.get('trackingCode') || '');
+  }
+
+  ngOnDestroy() {
+    this.revokePdfPreviewUrl();
   }
 
   verify() {
@@ -66,40 +67,46 @@ export class PreviewCertificate {
   loadPreview() {
     this.showPreview.set(true);
     this.isLoadingDoc.set(true);
+    this.revokePdfPreviewUrl();
 
     this.validationService
       .getValidatedBlob(this.trackingCode(), this.dni(), this.certificateCode())
       .subscribe({
         next: (blob) => {
           this.isLoadingDoc.set(false);
-          setTimeout(() => {
-            if (this.docxContainer) {
-              docx
-                .renderAsync(blob, this.docxContainer.nativeElement, undefined, {
-                  className: 'docx-preview-container',
-                  inWrapper: true,
-                })
-                .catch((err) => console.error(err));
-            }
-          }, 100);
+          this.rawPdfUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+          this.pdfPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.rawPdfUrl));
         },
         error: () => {
           this.isLoadingDoc.set(false);
-          alert('Error al renderizar el documento.');
+          alert('Error al cargar el PDF.');
         },
       });
+  }
+
+  closePreview() {
+    this.showPreview.set(false);
+    this.revokePdfPreviewUrl();
   }
 
   downloadDocument() {
     this.validationService
       .getValidatedBlob(this.trackingCode(), this.dni(), this.certificateCode())
       .subscribe((blob) => {
-        const url = window.URL.createObjectURL(blob);
+        const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${this.certificateCode()}.docx`;
+        a.download = `${this.certificateCode().replace(/[/\\]/g, '-')}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
       });
+  }
+
+  private revokePdfPreviewUrl() {
+    if (this.rawPdfUrl) {
+      URL.revokeObjectURL(this.rawPdfUrl);
+      this.rawPdfUrl = null;
+    }
+    this.pdfPreviewUrl.set(null);
   }
 }

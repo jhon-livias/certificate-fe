@@ -1,4 +1,4 @@
-<div class="max-w-6xl mx-auto">
+<div class="max-w-[1400px] mx-auto">
     <div class="flex justify-between items-center mb-6">
         <div>
             <h2 class="text-2xl font-bold">Listado de Estudiantes</h2>
@@ -8,8 +8,8 @@
             <input type="text"
                    [ngModel]="searchTerm()"
                    (ngModelChange)="onSearch($event)"
-                   placeholder="Buscar por código o DNI..."
-                   class="w-64 pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all shadow-sm">
+                   placeholder="Buscar por código, DNI, nombre..."
+                   class="w-72 pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all shadow-sm">
             <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
         </div>
     </div>
@@ -24,31 +24,39 @@
             </div>
         } @else {
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse min-w-[1200px]">
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                            <th class="p-4 whitespace-nowrap">Código</th>
-                            <th class="p-4 whitespace-nowrap">DNI</th>
-                            <th class="p-4">Apellidos y Nombres</th>
-                            <th class="p-4">Programa / Carrera</th>
-                            <th class="p-4">Modalidad</th>
+                            <th class="p-3 whitespace-nowrap">Código</th>
+                            <th class="p-3 whitespace-nowrap">DNI</th>
+                            <th class="p-3 whitespace-nowrap min-w-[220px]">Apellidos y Nombres</th>
+                            <th class="p-3 whitespace-nowrap min-w-[200px]">Programa</th>
+                            <th class="p-3 whitespace-nowrap">Modalidad</th>
+                            <th class="p-3 whitespace-nowrap min-w-[180px]">Facultad</th>
+                            <th class="p-3 whitespace-nowrap">Ciclo</th>
+                            <th class="p-3 whitespace-nowrap">Semestre</th>
+                            <th class="p-3 whitespace-nowrap min-w-[180px]">Email</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm text-gray-700">
                         @for (student of students(); track student.id) {
                             <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                <td class="p-4 font-medium">{{ student.studentCode }}</td>
-                                <td class="p-4">{{ student.documentNumber }}</td>
-                                <td class="p-4 font-bold text-gray-900">{{ student.fullName }}</td>
-                                <td class="p-4 text-gray-500">{{ student.program }}</td>
-                                <td class="p-4 text-center">{{ student.modality }}</td>
+                                <td class="p-3 font-medium whitespace-nowrap">{{ student.studentCode }}</td>
+                                <td class="p-3 whitespace-nowrap">{{ student.documentNumber }}</td>
+                                <td class="p-3 font-bold text-gray-900">{{ student.fullName }}</td>
+                                <td class="p-3 text-gray-600">{{ student.program }}</td>
+                                <td class="p-3 whitespace-nowrap">{{ student.modality }}</td>
+                                <td class="p-3 text-gray-600">{{ student.faculty }}</td>
+                                <td class="p-3 whitespace-nowrap text-center">{{ student.cycle }}</td>
+                                <td class="p-3 whitespace-nowrap text-center">{{ student.currentSemester }}</td>
+                                <td class="p-3 text-gray-500">{{ student.email }}</td>
                             </tr>
                         } @empty {
                             <tr>
-                                <td colspan="5" class="p-12 text-center text-gray-500">
+                                <td colspan="9" class="p-12 text-center text-gray-500">
                                     <i class="fa-regular fa-folder-open text-4xl mb-3 text-gray-300"></i>
                                     <p class="font-medium text-gray-600">No se encontraron estudiantes.</p>
-                                    <p class="text-xs text-gray-400 mt-1">Prueba buscando con otro DNI o Código.</p>
+                                    <p class="text-xs text-gray-400 mt-1">Prueba buscando con otro término o importa el CSV.</p>
                                 </td>
                             </tr>
                         }

@@ -140,7 +140,7 @@ export class Templates {
     this.previewTemplateName.set(template.name);
     this.isLoadingPreview.set(true);
 
-    this.templateService.downloadTemplate(template.id).subscribe({
+    this.templateService.previewTemplate(template.id).subscribe({
       next: (blob: Blob) => {
         this.isLoadingPreview.set(false);
 

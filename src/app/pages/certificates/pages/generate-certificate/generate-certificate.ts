@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import * as docx from 'docx-preview';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastService } from '../../../../services/toast.service';
 import { StudentService } from '../../../students/services/student.service';
 import { TemplateService } from '../../../templates/services/template.service';
@@ -14,59 +14,57 @@ import { CertificateService } from '../../services/certificate.service';
   imports: [CommonModule, FormsModule],
   templateUrl: './generate-certificate.html',
 })
-export class GenerateCertificate implements OnInit {
+export class GenerateCertificate implements OnInit, OnDestroy {
   private studentService = inject(StudentService);
   private templateService = inject(TemplateService);
   private certificateService = inject(CertificateService);
+  private sanitizer = inject(DomSanitizer);
 
-  @ViewChild('docxContainer', { static: false }) docxContainer!: ElementRef;
+  @ViewChild('pdfViewer', { static: false }) pdfViewer!: ElementRef<HTMLIFrameElement>;
 
-  // Estados Generales
   step = signal<number>(1);
   templates = toSignal(this.templateService.getList(), { initialValue: [] });
 
-  // Paso 1: Búsqueda y Selección
   searchCode = signal<string>('');
   selectedStudent = signal<any | null>(null);
   selectedTemplateId = signal<number | null>(null);
-  customCertificateCode = signal<string>(''); // Para que el admin edite el correlativo
+  customCertificateCode = signal<string>('');
 
-  // Estados de Carga
   isSearching = signal<boolean>(false);
   isGenerating = signal<boolean>(false);
   previewReady = signal<boolean>(false);
+  pdfPreviewUrl = signal<SafeResourceUrl | null>(null);
 
-  // Paso 2: Envío (Emails)
   ccEmails = signal<string[]>([]);
-  issuedCertificateId = signal<number | null>(null); // Añade esto arriba
+  issuedCertificateId = signal<number | null>(null);
   isSendingEmail = signal<boolean>(false);
   customEmail = signal<string>('');
-  emailBody = signal<string>(''); // Para enlazar el textarea
-
-  // toast = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+  emailBody = signal<string>('');
 
   private toast = inject(ToastService);
+  private rawPdfUrl: string | null = null;
 
   ngOnInit() {
     this.templateService.callGetList().subscribe();
   }
 
-  // Auto-completar el código sugerido cuando selecciona una plantilla
+  ngOnDestroy() {
+    this.revokePdfPreviewUrl();
+  }
+
   onTemplateChange(templateId: number) {
     this.selectedTemplateId.set(templateId);
     const template = this.templates().find((t) => t.id == templateId);
     if (template) {
-      this.customCertificateCode.set(template.code); // Ej: CPM Nº 00001 - 2026 R.A./UPRIT - PG
+      this.customCertificateCode.set(template.nextCode || template.code);
     }
   }
 
-  // Buscar estudiante por código (Conectado a tu API)
   searchStudent() {
     const code = this.searchCode();
-    if (code.length < 5) return; // Evitar búsquedas muy cortas
+    if (code.length < 5) return;
 
     this.isSearching.set(true);
-    // Asume que tienes este método en tu StudentService
     this.studentService.getOne(code).subscribe({
       next: (student) => {
         this.selectedStudent.set(student);
@@ -81,7 +79,6 @@ export class GenerateCertificate implements OnInit {
     });
   }
 
-  // La Magia: Generar y pintar el Word
   generatePreview() {
     const student = this.selectedStudent();
     const templateId = this.selectedTemplateId();
@@ -89,53 +86,45 @@ export class GenerateCertificate implements OnInit {
 
     if (!student || !templateId || !certCode) {
       this.toast.show('Por favor complete todos los campos de la izquierda.', 'error');
-
       return;
     }
 
     this.isGenerating.set(true);
     this.previewReady.set(false);
+    this.revokePdfPreviewUrl();
 
     const payload = {
-      student_code: student.studentCode,
+      student_code: student.studentCode || student.documentNumber,
       certificate_id: templateId,
       certificate_code: certCode,
     };
 
-    // 1. Mandamos a generar a Laravel
     this.certificateService.generateCertificate(payload).subscribe({
       next: (res) => {
         const issuedId = res.data.id;
         this.issuedCertificateId.set(issuedId);
 
-        // 2. Descargamos el Blob generado para pintarlo
         this.certificateService.downloadGenerated(issuedId).subscribe({
           next: (blob) => {
             this.isGenerating.set(false);
             this.previewReady.set(true);
-
-            setTimeout(() => {
-              if (this.docxContainer) {
-                docx
-                  .renderAsync(blob, this.docxContainer.nativeElement, undefined, {
-                    className: 'docx-preview-container',
-                    inWrapper: true,
-                  })
-                  .catch((err) => console.error('Error renderizando', err));
-              }
-            }, 100);
+            this.rawPdfUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+            this.pdfPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.rawPdfUrl));
           },
-          error: () => this.isGenerating.set(false),
+          error: () => {
+            this.isGenerating.set(false);
+            this.toast.show('No se pudo cargar la vista previa del PDF.', 'error');
+          },
         });
       },
       error: (err) => {
         console.error(err);
         this.isGenerating.set(false);
+        this.toast.show(err.error?.message || 'Error al generar la constancia.', 'error');
       },
     });
   }
 
-  // Utilidades para el Paso 2
   addCcEmail() {
     this.ccEmails.update((emails) => [...emails, '']);
   }
@@ -162,22 +151,22 @@ export class GenerateCertificate implements OnInit {
     this.isSendingEmail.set(true);
 
     const payload = {
-      email: this.customEmail() || 'estudiante@correo.com', // Ajusta según tu base de datos
-      cc_emails: this.ccEmails().filter((e) => e.trim() !== ''), // Limpiar vacíos
+      email: this.customEmail() || 'estudiante@correo.com',
+      cc_emails: this.ccEmails().filter((e) => e.trim() !== ''),
       body:
         this.emailBody() || `Estimado(a) ${student.fullName}, adjunto encontrará su constancia...`,
     };
 
     this.certificateService.sendEmail(id, payload).subscribe({
-      next: (res) => {
+      next: () => {
         this.isSendingEmail.set(false);
         this.toast.show('¡Constancia enviada exitosamente al correo!', 'success');
 
-        // Resetear todo para la siguiente constancia
         this.step.set(1);
         this.searchCode.set('');
         this.selectedStudent.set(null);
         this.previewReady.set(false);
+        this.revokePdfPreviewUrl();
         this.ccEmails.set([]);
       },
       error: (err) => {
@@ -185,5 +174,13 @@ export class GenerateCertificate implements OnInit {
         this.isSendingEmail.set(false);
       },
     });
+  }
+
+  private revokePdfPreviewUrl() {
+    if (this.rawPdfUrl) {
+      URL.revokeObjectURL(this.rawPdfUrl);
+      this.rawPdfUrl = null;
+    }
+    this.pdfPreviewUrl.set(null);
   }
 }

@@ -11,7 +11,7 @@ import { BACKEND_URL } from '../../../../utils/constants';
 })
 export class StudentUpload {
   private studentService = inject(StudentService);
-  downloadLink = BACKEND_URL + "/template/plantilla_alumnos.xlsx";
+  downloadLink = BACKEND_URL + "/template/plantilla_alumnos.csv";
 
   // Estados reactivos
   selectedFile = signal<File | null>(null);

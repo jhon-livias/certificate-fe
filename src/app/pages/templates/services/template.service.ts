@@ -8,7 +8,8 @@ import { ApiService } from '../../../services/api.service';
 export interface Template {
   id: number;
   name: string;
-  code: string; // Cambiado
+  code: string;
+  nextCode?: string;
   fileName: string;
   updatedAt: string;
 }
@@ -60,6 +61,12 @@ export class TemplateService {
 
   downloadTemplate(id: number): Observable<Blob> {
     return this.http.get(`${environment.BASE_URL}/certificates/${id}/download`, {
+      responseType: 'blob',
+    });
+  }
+
+  previewTemplate(id: number): Observable<Blob> {
+    return this.http.get(`${environment.BASE_URL}/certificates/${id}/preview`, {
       responseType: 'blob',
     });
   }

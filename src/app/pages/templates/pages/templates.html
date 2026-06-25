@@ -94,8 +94,9 @@
         <h4 class="font-bold text-gray-800 truncate" [title]="template.name">{{ template.name }}</h4>
         <span
           class="inline-block mt-1.5 px-2 py-0.5 bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold rounded">
-          {{ template.code }}
+          {{ template.nextCode || template.code }}
         </span>
+        <p class="text-xs text-gray-400 mt-1 truncate">Código interno: {{ template.code }}</p>
         <p class="text-xs text-gray-400 mt-1.5 truncate">{{ template.fileName }}</p>
         <p class="text-[11px] font-medium text-gray-500 mt-2"><i class="fa-regular fa-clock mr-1"></i> Actualizado {{
           template.updatedAt }}</p>
@@ -138,10 +139,13 @@
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
 
       <div class="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
-        <h3 class="font-bold text-gray-800 flex items-center">
-          <i class="fa-solid fa-file-word text-blue-600 text-xl mr-2"></i>
-          Previsualización: {{ previewTemplateName() }}
-        </h3>
+        <div>
+          <h3 class="font-bold text-gray-800 flex items-center">
+            <i class="fa-solid fa-file-word text-blue-600 text-xl mr-2"></i>
+            Previsualización: {{ previewTemplateName() }}
+          </h3>
+          <p class="text-xs text-gray-500 mt-1">Vista con el próximo correlativo y datos de ejemplo. Al generar, se usarán los datos reales del estudiante.</p>
+        </div>
         <button (click)="closePreview()" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
           <i class="fa-solid fa-xmark text-xl"></i>
         </button>
